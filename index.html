@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>中文字符统计工具</title>
+    <title>中日英字符统计工具</title>
 </head>
 <body>
-    <h1>中文字符统计工具</h1>
+    <h1>中日英字符统计工具</h1>
     
     <div>
         <h2>上传文件</h2>
@@ -25,8 +25,10 @@
         <h2>使用说明</h2>
         <ul>
             <li>点击"选择文件"按钮上传任何文本文件</li>
-            <li>系统将自动统计文件中的中文字符数量</li>
+            <li>系统将自动统计文件中的中文字符、日语字符和英文词数</li>
             <li>中文字符包括所有Unicode范围内的中文字符</li>
+            <li>日语字符包括平假名、片假名</li>
+            <li>英文词数只统计引号内的字符，且排除同时包含"voice"和"mp3"的行</li>
         </ul>
     </div>
 
@@ -40,12 +42,18 @@
             reader.onload = function(e) {
                 const content = e.target.result;
                 const chineseCount = countChineseCharacters(content);
+                const japaneseCount = countJapaneseCharacters(content);
+                const englishWordCount = countEnglishWords(content);
+                const totalCount = chineseCount + japaneseCount;
                 
                 // 显示统计结果
                 document.getElementById('result').innerHTML = `
                     <p>文件: ${file.name}</p>
                     <p>文件大小: ${file.size} 字节</p>
                     <p>中文字符数量: <strong>${chineseCount}</strong></p>
+                    <p>日语字符数量: <strong>${japaneseCount}</strong></p>
+                    <p>中日文字符总数: <strong>${totalCount}</strong></p>
+                    <p>英文词数(引号内): <strong>${englishWordCount}</strong></p>
                 `;
             };
             
@@ -63,6 +71,48 @@
             const matches = text.match(chineseRegex);
             return matches ? matches.length : 0;
         }
+        
+        function countJapaneseCharacters(text) {
+            // 使用正则表达式匹配日语字符
+            // 平假名: \u3040-\u309f
+            // 片假名: \u30a0-\u30ff
+            const hiraganaRegex = /[\u3040-\u309f]/g;
+            const katakanaRegex = /[\u30a0-\u30ff]/g;
+            
+            const hiraganaMatches = text.match(hiraganaRegex) || [];
+            const katakanaMatches = text.match(katakanaRegex) || [];
+            
+            return hiraganaMatches.length + katakanaMatches.length;
+        }
+        
+        function countEnglishWords(text) {
+            const lines = text.split('\n');
+            let totalWordCount = 0;
+            
+            for (const line of lines) {
+                // 跳过同时包含"voice"和"mp3"的行
+                if (line.includes('voice') && line.includes('mp3')) {
+                    continue;
+                }
+                
+                // 匹配双引号内的内容
+                const quotedTextRegex = /"([^"]*)"/g;
+                let match;
+                
+                while ((match = quotedTextRegex.exec(line)) !== null) {
+                    const quotedText = match[1];
+                    // 统计英文单词（由字母组成，忽略数字和特殊字符）
+                    const wordRegex = /\b[a-zA-Z]+\b/g;
+                    const words = quotedText.match(wordRegex);
+                    
+                    if (words) {
+                        totalWordCount += words.length;
+                    }
+                }
+            }
+            
+            return totalWordCount;
+        }
     </script>
 </body>
-  </html>
+</html>
