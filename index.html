@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中文字符统计工具</title>
+</head>
+<body>
+    <h1>中文字符统计工具</h1>
+    
+    <div>
+        <h2>上传文件</h2>
+        <input type="file" id="fileInput">
+        <p>支持所有文本文件格式</p>
+    </div>
+    
+    <div>
+        <h2>统计结果</h2>
+        <div id="result">
+            <p>请上传文件以查看统计结果</p>
+        </div>
+    </div>
+    
+    <div>
+        <h2>使用说明</h2>
+        <ul>
+            <li>点击"选择文件"按钮上传任何文本文件</li>
+            <li>系统将自动统计文件中的中文字符数量</li>
+            <li>中文字符包括所有Unicode范围内的中文字符</li>
+        </ul>
+    </div>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const content = e.target.result;
+                const chineseCount = countChineseCharacters(content);
+                
+                // 显示统计结果
+                document.getElementById('result').innerHTML = `
+                    <p>文件: ${file.name}</p>
+                    <p>文件大小: ${file.size} 字节</p>
+                    <p>中文字符数量: <strong>${chineseCount}</strong></p>
+                `;
+            };
+            
+            reader.onerror = function() {
+                document.getElementById('result').innerHTML = '<p>读取文件时出错</p>';
+            };
+            
+            reader.readAsText(file, 'UTF-8');
+        });
+        
+        function countChineseCharacters(text) {
+            // 使用正则表达式匹配中文字符
+            // 中文字符的Unicode范围: \u4e00-\u9fff
+            const chineseRegex = /[\u4e00-\u9fff]/g;
+            const matches = text.match(chineseRegex);
+            return matches ? matches.length : 0;
+        }
+    </script>
+</body>
+  </html>
